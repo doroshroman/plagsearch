@@ -75,20 +75,16 @@ def cosine_sim(input_doc: str, corpus: List[str]) -> float:
 
 
 if __name__ == "__main__":
-    # folder = './test_files'
-    # input_path = f'{folder}/MpiLab1.docx' # file to compare
-    # input_doc = textract.process(input_path).decode('utf-8')
+    folder = './test_files'
+    input_path_1 = f'{folder}/MpiLab1.docx'
+    input_path_2 = f'{folder}/MpiLab1_plag.docx'
+
+    input_doc_1 = textract.process(input_path_1).decode('utf-8')
+    input_doc_2 = textract.process(input_path_2).decode('utf-8')
     
-    # corpus = []
-    # import os, time
+    from hashes.simhash import simhash
+    hash1 = simhash(normalize(input_doc_1, uk_stop_words))
+    hash2 = simhash(normalize(input_doc_2, uk_stop_words))
 
-    # start = time.time()
-
-    # with os.scandir(folder) as it:
-    #     for file in it:
-    #         document = textract.process(file.path).decode('utf-8')
-    #         corpus.append(document)
-
-    # print(cosine_sim(input_doc, corpus))
-    # end = time.time()
-    # print(f' Time to process {len(corpus)} documents is: {end - start}')
+    print([hash1.hex(), hash2.hex()])
+    print(hash1.similarity(hash2))
