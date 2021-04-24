@@ -3,6 +3,7 @@ from app import db
 from enum import Enum
 from config import Config
 from datetime import datetime as dt
+import os
 
 
 users_roles = db.Table('users_roles',
@@ -37,6 +38,7 @@ class User(db.Model):
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
     created_at = db.Column(db.DateTime, default=dt.utcnow())
+    documents = db.relationship('Document', backref='user', lazy='dynamic')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -62,7 +64,7 @@ class User(db.Model):
 
 class RevokedToken(db.Model):
     __tablename__ = 'revoked_tokens'
-    id = db.Column(db.Integer, primary_key = True)
+    id = db.Column(db.Integer, primary_key=True)
     jti = db.Column(db.String(120))
     
     def add(self):
@@ -73,3 +75,32 @@ class RevokedToken(db.Model):
     def is_jti_blacklisted(cls, jti):
         query = cls.query.filter_by(jti = jti).first()
         return bool(query)
+
+
+class Document(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128), index=True, nullable=False)
+    path = db.Column(db.String, index=True, nullable=False)
+    description = db.Column(db.String, nullable=True)
+    hash_sha256 = db.Column(db.String(65), nullable=True)
+    simhash = db.Column(db.String, nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    doc_type = db.Column(db.Integer, db.ForeignKey('document_type.id'), nullable=True)
+
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+    
+    def delete_from_db(self):
+        db.session.delete(self)
+        db.session.commit()
+    
+    @classmethod
+    def find_by_path(cls, path):
+        return cls.query.filter_by(path=path).first()
+
+
+class DocumentType(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128), index=True, nullable=False)
+    description = db.Column(db.String(256), index=True)

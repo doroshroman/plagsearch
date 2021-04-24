@@ -11,6 +11,10 @@ class Config(object):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'diploma-is-not-the-best'
     DOCUMENTS_NUMBER_DEFAULT = sys.maxsize
+    
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or 'hello-friend'
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
+
+    UPLOAD_FOLDER = os.path.join(basedir, 'documents')
+    ALLOWED_EXTENSIONS = {'txt', 'pdf', 'doc', 'docx', 'html', 'htm', 'epub'}

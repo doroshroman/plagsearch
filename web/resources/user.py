@@ -8,19 +8,6 @@ from flask_jwt_extended import (
 from web.models import User, Role, RoleName, RevokedToken
 
 
-class RoleItem(fields.Raw):
-    def format(self, value):
-        return value.name.value
-
-
-# resource_fields = {
-#     'id': fields.Integer,
-#     'username': fields.String,
-#     'email': fields.String,
-#     'created_at': fields.DateTime(dt_format='rfc822'),
-#     'roles': fields.List(RoleItem)
-# }
-
 parser = reqparse.RequestParser()
 _empty_msg = 'cannot be empty'
 parser.add_argument('username', type=str, required=True, help=f'Username {_empty_msg}')
@@ -29,7 +16,6 @@ parser.add_argument('email', type=str)
 
 
 class UserRegister(Resource):
-    #@marshall_with(resource_fields)
     def post(self):
         data = parser.parse_args()
 
