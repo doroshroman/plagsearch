@@ -6,14 +6,17 @@ import werkzeug
 from web.models import Document, DocumentType, User
 
 from ..utils import DocumentUploader, DocumentCleaner
-from ..utils import DuplicateNameException
 from ..utils import Hash
+
 import os
 from config import Config
+
+from plagsearch.comparison import TextProcessor  
 
 
 parser = reqparse.RequestParser()
 _empty_msg = 'cannot be empty'
+parser.add_argument('name', type=str, required=True, help=f'Name field {_empty_msg}')
 parser.add_argument('description', type=str)
 parser.add_argument('attachment', type=werkzeug.datastructures.FileStorage, location='files',
                      required=True, help=f'Attachment field {_empty_msg}')
@@ -44,48 +47,47 @@ class NewDocument(Resource):
 
         uploader = DocumentUploader(data['attachment'], username)
         try:
-            file_name, path = uploader.upload()
+            path = uploader.upload()
 
             if path:
+                text_processor = TextProcessor(path)
+                normalized_text = text_processor.normalize()
+                simhash = Hash.simhash(normalized_text)
+
+                hash_sha256 = Hash.sha256(path)
+
                 document = Document(
-                    name=file_name, path=path, description=data['description'],
-                    user=user
+                    name=data['name'], path=path, description=data['description'],
+                    hash_sha256=hash_sha256, simhash=simhash ,user=user
                     )
                 document.save_to_db()
 
-                return {'message': f'{file_name} is successfully created'}
+                return {'message': 'Document is successfully created'}
             else:
                 return abort(400, message=f'Incorrect document extension')
 
-        except DuplicateNameException:
-            return abort(400, message=f'This document is already exists')
         except Exception:
             return abort(500, message='Something went wrong')
 
 
-def _find_document(username, name):
-    path = os.path.join(Config.UPLOAD_FOLDER, os.path.join(username, name))
-    doc = Document.find_by_path(path)
-    if not doc:
-        return abort(400, message='Document is not exists')
-    return doc
-
-
 class OneDocument(Resource):
+    def _search_document(self, hash):
+        document = Document.find_by_hash(hash)
+        if not document:
+            return abort(400, message='This document does not exist')
+        return document
+
     @jwt_required()
     @marshal_with(resource_fields)
-    def get(self, name):
-        username = get_jwt_identity()
-        doc = _find_document(username, name)
-        return doc, 200
+    def get(self, hash):
+        document = self._search_document(hash)
+        return document, 200
     
     @jwt_required()
-    def delete(self, name):
-        username = get_jwt_identity()
-        doc = _find_document(username, name)
-        
-        
-        cleaner = DocumentCleaner(doc.path)
+    def delete(self, hash):
+        document = self._search_document(hash)
+
+        cleaner = DocumentCleaner(document.path)
         if cleaner.erase():
             doc.delete_from_db()
 
@@ -93,5 +95,10 @@ class OneDocument(Resource):
         
     @jwt_required()
     def put(self, name):
-        username = get_jwt_identity()
-        
+        pass
+
+
+class DocumentAnalyzer(Resource):
+    @jwt_required()
+    def post(self, id):
+        pass

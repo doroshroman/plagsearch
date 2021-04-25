@@ -4,17 +4,14 @@ from werkzeug.utils import secure_filename
 import pathlib
 import hashlib
 from hashes.simhash import simhash
-
-
-class DuplicateNameException(Exception):
-    pass
+from datetime import datetime as dt
 
 
 class DocumentUploader:
     def __init__(self, document, username):
         self.data = document
-        self.filename = self.data.filename
         self.username = username
+        self.filename = self.data.filename
         self._create_proper_directory()
 
     def _create_proper_directory(self):
@@ -27,14 +24,14 @@ class DocumentUploader:
     
     def upload(self):
         if self.data and self.allowed_file():
+            name, ext = self.filename.split('.')
+            self.filename = f'{name}_{dt.timestamp(dt.now())}.{ext}'
             doc_name = os.path.join(f'{self.username}', secure_filename(self.filename))
 
             doc_path = os.path.join(Config.UPLOAD_FOLDER, doc_name)
-            if os.path.isfile(doc_path):
-                raise DuplicateNameException()
 
             self.data.save(doc_path)
-            return (self.filename, doc_path) if os.path.isfile(doc_path) else None
+            return doc_path if os.path.isfile(doc_path) else None
                 
         return None
 
@@ -50,12 +47,12 @@ class DocumentCleaner:
         return not os.path.isfile(self.path)
 
 class Hash:
-    def __init__(self, message):
-        self.message = message
+
+    @staticmethod
+    def sha256(message):
+        return hashlib.sha256(message).hexdigest()
     
-    def sha256(self):
-        return hashlib.sha256(message.encode()).hexdigest()
-    
-    def simhash(self):
-        return simhash(self.message).hex()
+    @staticmethod
+    def simhash(message):
+        return simhash(message).hex()
     

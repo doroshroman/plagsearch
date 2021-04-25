@@ -96,8 +96,8 @@ class Document(db.Model):
         db.session.commit()
     
     @classmethod
-    def find_by_path(cls, path):
-        return cls.query.filter_by(path=path).first()
+    def find_by_hash(cls, hash):
+        return cls.query.filter_by(hash_sha256=hash).first()
 
 
 class DocumentType(db.Model):
