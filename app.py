@@ -37,7 +37,7 @@ api.add_resource(UserLogout, '/logout')
 api.add_resource(TokenRefresh, '/refresh')
 
 api.add_resource(NewDocument, '/document/add')
-api.add_resource(OneDocument, '/document/<string:name>')
+api.add_resource(OneDocument, '/document/<string:hash>')
 api.add_resource(SecretResource, '/secret') # for test purpose
 
 

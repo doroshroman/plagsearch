@@ -11,8 +11,6 @@ from ..utils import Hash
 import os
 from config import Config
 
-from plagsearch.comparison import TextProcessor  
-
 
 parser = reqparse.RequestParser()
 _empty_msg = 'cannot be empty'
@@ -40,6 +38,7 @@ resource_fields = {
 
 class NewDocument(Resource):
     @jwt_required()
+    @marshal_with(resource_fields)
     def post(self):
         data = parser.parse_args()
         username = get_jwt_identity()
@@ -50,19 +49,15 @@ class NewDocument(Resource):
             path = uploader.upload()
 
             if path:
-                text_processor = TextProcessor(path)
-                normalized_text = text_processor.normalize()
-                simhash = Hash.simhash(normalized_text)
-
                 hash_sha256 = Hash.sha256(path)
 
                 document = Document(
                     name=data['name'], path=path, description=data['description'],
-                    hash_sha256=hash_sha256, simhash=simhash ,user=user
+                    hash_sha256=hash_sha256, user=user
                     )
                 document.save_to_db()
 
-                return {'message': 'Document is successfully created'}
+                return document, 200
             else:
                 return abort(400, message=f'Incorrect document extension')
 
@@ -89,13 +84,30 @@ class OneDocument(Resource):
 
         cleaner = DocumentCleaner(document.path)
         if cleaner.erase():
-            doc.delete_from_db()
+            document.delete_from_db()
+            return {'message': 'Document is deleted'}
+        else:
+            return abort(500, message='Something went wrong')
 
-        return {'message': 'Document is deleted'}
-        
     @jwt_required()
-    def put(self, name):
-        pass
+    @marshal_with(resource_fields)
+    def put(self, hash):
+        document = self._search_document(hash)
+        parser_copy = parser.copy()
+        parser_copy.remove_argument('attachment')
+
+        data = parser_copy.parse_args()
+        name, description = data['name'], data['description']
+        document.name = name
+
+        if description:
+            document.description = description
+        
+        try:
+            document.save_to_db()
+            return document, 200
+        except:
+            return abort(500, message='Something went wrong')
 
 
 class DocumentAnalyzer(Resource):

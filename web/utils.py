@@ -50,7 +50,7 @@ class Hash:
 
     @staticmethod
     def sha256(message):
-        return hashlib.sha256(message).hexdigest()
+        return hashlib.sha256(message.encode('utf-8')).hexdigest()
     
     @staticmethod
     def simhash(message):

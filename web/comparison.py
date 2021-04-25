@@ -19,7 +19,7 @@ except:
 
 
 class TextProcessor:
-    def __init__(self, document_path, stop_words_path='./stop_words_ua.txt', lang='uk'):
+    def __init__(self, document_path, stop_words_path='../stop_words_ua.txt', lang='uk'):
         self.lang = lang
         self.morph = pymorphy2.MorphAnalyzer(lang=self.lang)
         self.text = textract.process(document_path).decode('utf-8')
@@ -74,7 +74,7 @@ class TextProcessor:
 #     return np.nanmax(similarity_matrix[-1])    
 
 
-if __name__ == "__main__":
+#if __name__ == "__main__":
     # folder = './test_files'
     # input_path_1 = f'{folder}/MpiLab1.docx'
     # input_path_2 = f'{folder}/MpiLab1_plag.docx'
