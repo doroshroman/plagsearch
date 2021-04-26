@@ -27,7 +27,7 @@ migrate = Migrate(app, db)
 jwt = JWTManager(app)
 
 from web.resources.user import UserRegister, UserLogin, SecretResource, UserLogout, TokenRefresh
-from web.resources.document import NewDocument, OneDocument
+from web.resources.document import NewDocument, OneDocument, DocumentAnalyzer
 
 from web.models import RevokedToken
 
@@ -38,6 +38,8 @@ api.add_resource(TokenRefresh, '/refresh')
 
 api.add_resource(NewDocument, '/document/add')
 api.add_resource(OneDocument, '/document/<string:hash>')
+
+api.add_resource(DocumentAnalyzer, '/document/analyze/<string:hash>')
 api.add_resource(SecretResource, '/secret') # for test purpose
 
 

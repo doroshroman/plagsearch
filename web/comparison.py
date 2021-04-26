@@ -11,6 +11,8 @@ from typing import List
 from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
 import functools
+from config import basedir
+import os
 
 try:
     nltk.data.find('tokenizers/punkt')
@@ -19,11 +21,13 @@ except:
 
 
 class TextProcessor:
-    def __init__(self, document_path, stop_words_path='../stop_words_ua.txt', lang='uk'):
+    def __init__(self, document_path, stop_words_path=None, lang='uk'):
         self.lang = lang
         self.morph = pymorphy2.MorphAnalyzer(lang=self.lang)
         self.text = textract.process(document_path).decode('utf-8')
-        self.stop_words = self._read_stop_words(stop_words_path)
+        if not stop_words_path:
+            stop_words_path = os.path.join(basedir, 'stop_words_ua.txt')
+            self.stop_words = self._read_stop_words(stop_words_path)
 
     def _read_stop_words(self, words_path):
         with open(words_path, encoding='utf-8') as file:
