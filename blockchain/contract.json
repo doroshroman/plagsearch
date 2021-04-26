@@ -1,0 +1,31 @@
+{
+    "abi": [
+        {
+            "inputs": [
+                {
+                    "internalType": "string",
+                    "name": "hash",
+                    "type": "string"
+                }
+            ],
+            "name": "addHash",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "getAllHashes",
+            "outputs": [
+                {
+                    "internalType": "string[]",
+                    "name": "",
+                    "type": "string[]"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        }
+    ],
+    "contract_address": "0x26b85Ef357eEAbf22e2578DfF4E7EBD0a8d19Aac"
+}
