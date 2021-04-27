@@ -6,6 +6,10 @@ from flask_jwt_extended import (
     get_jwt, jwt_required
 )
 from web.models import User, Role, RoleName, RevokedToken
+from config import Config
+
+from google.oauth2 import id_token
+from google.auth.transport import requests
 
 
 parser = reqparse.RequestParser()
@@ -71,6 +75,28 @@ class UserLogin(Resource):
         else:
             return abort(400, message='Wrong password')
 
+
+class UserLoginWithGoogle(Resource):
+    parser = reqparse.RequestParser()
+    parser.add_argument('id_token', type=str, required=True, help=f'Id token {_empty_msg}')
+    def post(self):
+        data = UserLoginWithGoogle.parser.parse_args()
+        try:
+            idinfo = id_token.verify_oauth2_token(data['id_token'], requests.Request(),
+                                                    Config.GOOGLE_CLIENT_ID)
+            
+            access_token = create_access_token(identity=idinfo["email"])
+            refresh_token = create_refresh_token(identity=idinfo["email"])
+            response =  jsonify({
+                'message': f'Logged in as {idinfo["email"]}',
+                'access_token': access_token,
+                'refresh_token': refresh_token
+            })
+            return response
+
+        except ValueError:
+            return abort(400, message='Incorrect id token')
+            
 
 class UserLogout(Resource):
     @jwt_required()
