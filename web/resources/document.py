@@ -45,10 +45,10 @@ class NewDocument(Resource):
     @marshal_with(resource_fields)
     def post(self):
         data = parser.parse_args()
-        username = get_jwt_identity()
-        user = User.find_by_username(username)
+        identity = get_jwt_identity()
+        user = User.find_by_identity(identity)
 
-        uploader = DocumentUploader(data['attachment'], username)
+        uploader = DocumentUploader(data['attachment'], Hash.sha256(identity))
         try:
             path = uploader.upload()
 
@@ -146,3 +146,14 @@ class DocumentAnalyzer(Resource):
         all_hashes = saver.functions.getAllHashes().call()
         print(all_hashes)
         return 200
+
+
+class DocumentList(Resource):
+    @jwt_required()
+    @marshal_with(resource_fields)
+    def get(self):
+        identity = get_jwt_identity()
+        user = User.find_by_identity(identity)
+        documents = user.documents.all()
+
+        return documents, 200

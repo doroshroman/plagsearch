@@ -32,7 +32,7 @@ jwt = JWTManager(app)
 from web.resources.user import ( 
     UserRegister, UserLogin, SecretResource, UserLogout, TokenRefresh, UserLoginWithGoogle
 )
-from web.resources.document import NewDocument, OneDocument, DocumentAnalyzer
+from web.resources.document import NewDocument, OneDocument, DocumentAnalyzer, DocumentList
 
 from web.models import RevokedToken
 
@@ -44,6 +44,7 @@ api.add_resource(UserLoginWithGoogle, '/google_login')
 
 api.add_resource(NewDocument, '/document/add')
 api.add_resource(OneDocument, '/document/<string:hash>')
+api.add_resource(DocumentList, '/documents')
 
 api.add_resource(DocumentAnalyzer, '/document/analyze/<string:hash>')
 api.add_resource(SecretResource, '/secret') # for test purpose

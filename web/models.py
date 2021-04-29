@@ -13,6 +13,7 @@ users_roles = db.Table('users_roles',
 
 class RoleName(Enum):
     registered_user = 'Registered User'
+    registered_with_google = 'Registered User With Google'
 
 
 class Role(db.Model):
@@ -58,6 +59,12 @@ class User(db.Model):
     def find_by_email(cls, email):
         return cls.query.filter_by(email=email).first()
     
+    @classmethod
+    def find_by_identity(cls, identity):
+        by_username = cls.find_by_username(identity)
+        by_email = cls.find_by_email(identity)
+        return by_username if by_username else by_email
+
     def __repr__(self):
         return f'User {self.id}: {self.username}, {self.email}'
     

@@ -85,10 +85,20 @@ class UserLoginWithGoogle(Resource):
             idinfo = id_token.verify_oauth2_token(data['id_token'], requests.Request(),
                                                     Config.GOOGLE_CLIENT_ID)
             
-            access_token = create_access_token(identity=idinfo["email"])
-            refresh_token = create_refresh_token(identity=idinfo["email"])
+            email = idinfo["email"]
+            if not User.find_by_email(email):
+                
+                user = User(email=email)
+                role = Role.find_by_name(RoleName.registered_with_google)
+                if role:
+                    user.roles.append(role)
+
+                user.save_to_db()
+
+            access_token = create_access_token(identity=email)
+            refresh_token = create_refresh_token(identity=email)
             response =  jsonify({
-                'message': f'Logged in as {idinfo["email"]}',
+                'message': f'Logged in as {email}',
                 'access_token': access_token,
                 'refresh_token': refresh_token
             })
@@ -96,7 +106,9 @@ class UserLoginWithGoogle(Resource):
 
         except ValueError:
             return abort(400, message='Incorrect id token')
-            
+        except Exception:
+            return abort(500, message='Something went wrong')
+
 
 class UserLogout(Resource):
     @jwt_required()
