@@ -13,6 +13,7 @@ import numpy as np
 import functools
 from config import basedir
 import os
+from .utils import Hash
 
 try:
     nltk.data.find('tokenizers/punkt')
@@ -63,6 +64,11 @@ class TextProcessor:
         self.text = re.sub(r"([0-9])([\u0400-\u04FF]|[A-z])", r"\1 \2", self.text)
         
         return self.tokenize(self.text)
+
+
+def compare(doc_simhash, simhashes):
+    report = {doc_simhash.hex():doc_simhash.similarity(Hash.simhash(sh)) for sh in set(simhashes)}
+    return dict(sorted(report.items(), key=lambda item: item[1], reverse=True))
 
 
 # normalize_partial = functools.partial(normalize, stop_words=uk_stop_words)

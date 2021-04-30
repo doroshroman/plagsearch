@@ -4,17 +4,17 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 import werkzeug
 
 from web.models import Document, DocumentType, User
-from web.comparison import TextProcessor
+from web.comparison import TextProcessor, compare 
 from ..utils import DocumentUploader, DocumentCleaner
 from ..utils import Hash
 
 import os, json
 from config import Config, basedir
 
-from web3 import Web3, HTTPProvider
-
-w3 = Web3(HTTPProvider('http://127.0.0.1:8545'))
-
+import sys
+# add blockchain folder to path
+sys.path.append(os.path.join(basedir, 'blockchain'))
+from client import Client
 
 parser = reqparse.RequestParser()
 _empty_msg = 'cannot be empty'
@@ -115,7 +115,7 @@ class OneDocument(Resource):
 
 
 class DocumentAnalyzer(Resource):
-    #@jwt_required()
+    @jwt_required()
     def post(self, hash):
         document = _search_document(hash)
         
@@ -123,28 +123,11 @@ class DocumentAnalyzer(Resource):
         processor = TextProcessor(document.path)
         simhash = Hash.simhash(processor.normalize())
         
-        contract_path = os.path.join(basedir, os.path.join('blockchain', 'contract.json'))
-        with open(contract_path, 'r') as in_:
-            contract_data = json.load(in_)  
-
-        key="0x0bb565fc386a4283e484b5cbb750feae0932a0aab577489dc8ca8d792bbee694" #change later
-        account = w3.eth.account.privateKeyToAccount(key)
-        account_address= account.address
-
-        abi = contract_data['abi']
-        contract_address = contract_data['contract_address']
-
-        # create contract instance
-        saver = w3.eth.contract(
-            address=contract_address, abi=abi
-        )
-        tx = saver.functions.addHash(simhash).buildTransaction({'nonce': w3.eth.getTransactionCount(account_address)})
-        signed_tx = account.sign_transaction(tx)
-        tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
-        w3.eth.wait_for_transaction_receipt(tx_hash)
+        client = Client()
+        hashes = client.get_all()
         
-        all_hashes = saver.functions.getAllHashes().call()
-        print(all_hashes)
+        print(compare(simhash, hashes))
+        
         return 200
 
 
