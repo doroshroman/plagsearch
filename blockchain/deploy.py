@@ -37,7 +37,7 @@ def deploy():
     contract_address = tx_receipt['contractAddress']
 
     # dump contract address and abi
-    with open('contract.json', 'w') as out:
+    with open(os.path.join(basedir, 'contract.json'), 'w') as out:
         data = {
             "abi": abi,
             "contract_address": contract_address

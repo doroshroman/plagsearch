@@ -19,7 +19,7 @@ class Client:
             abi=self.contract_data['abi']
         )
 
-    def add(self, value):
+    def add_hash(self, value):
         tx = self.saver.functions.addHash(value).buildTransaction(
             {
                 'nonce': w3.eth.getTransactionCount(self.account.address)
@@ -29,6 +29,5 @@ class Client:
         tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
         w3.eth.wait_for_transaction_receipt(tx_hash)
 
-    def get_all(self):
+    def get_all_hashes(self):
         return self.saver.functions.getAllHashes().call()
-

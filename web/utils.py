@@ -54,5 +54,5 @@ class Hash:
     
     @staticmethod
     def simhash(message):
-        return simhash(message)
+        return simhash(message).hash
     

@@ -70,10 +70,11 @@ class NewDocument(Resource):
 
 
 def _search_document(hash):
-        document = Document.find_by_hash(hash)
-        if not document:
-            return abort(400, message='This document does not exist')
-        return document
+    document = Document.find_by_hash(hash)
+    if not document:
+        return abort(400, message='This document does not exist')
+    return document
+
 
 class OneDocument(Resource):
     @jwt_required()
@@ -119,16 +120,27 @@ class DocumentAnalyzer(Resource):
     def post(self, hash):
         document = _search_document(hash)
         
-        # normalize text for simhash
         processor = TextProcessor(document.path)
-        simhash = Hash.simhash(processor.normalize())
+        simhash = str(Hash.simhash(processor.normalize()))
         
         client = Client()
-        hashes = client.get_all()
+        hashes = client.get_all_hashes()
+
+        report = compare(simhash, hashes)
         
-        print(compare(simhash, hashes))
-        
-        return 200
+        total_similarity = 1.0
+        if total_similarity not in dict(report).values():
+            # Add hash to blockchain
+            client.add_hash(simhash)
+            
+            document.simhash = simhash
+            try:
+                document.save_to_db()
+            except Exception:
+                return abort(500, "Something went wrong")
+
+        serialized = [{"simhash": str(sh), "similarity": st} for sh, st in report]
+        return serialized, 200
 
 
 class DocumentList(Resource):
