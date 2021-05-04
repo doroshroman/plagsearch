@@ -3,12 +3,15 @@ pragma abicoder v2;
 
 contract saver{
     string[] simhashes;
+    string[] sha256hashes;
 
-    function addHash(string memory hash)public{
-        simhashes.push(hash); 
+    function addHash(string memory simhash, string memory hashSha256) public{
+        simhashes.push(simhash);
+        sha256hashes.push(hashSha256);
     }
-    function getAllHashes() public view returns (string[] memory){
-        return simhashes;
+
+    function getAllHashes() public view returns (string[] memory, string[] memory){
+        return (simhashes, sha256hashes);
     }
 
 }

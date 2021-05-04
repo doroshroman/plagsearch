@@ -19,8 +19,8 @@ class Client:
             abi=self.contract_data['abi']
         )
 
-    def add_hash(self, value):
-        tx = self.saver.functions.addHash(value).buildTransaction(
+    def add_hashes(self, simhash, hash_sha256):
+        tx = self.saver.functions.addHash(simhash, hash_sha256).buildTransaction(
             {
                 'nonce': w3.eth.getTransactionCount(self.account.address)
             }
