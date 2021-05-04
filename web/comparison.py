@@ -70,8 +70,14 @@ class TextProcessor:
         return self.tokenize(self.text)
 
 
-def compare(doc_simhash, simhashes, limit=5):
+def compare(doc_simhash, doc_sha256, simhashes, sha256hashes, limit=10):
     doc_hs = hashtype(hash=int(doc_simhash))
+    
+    # remove the same item
+    ind = sha256hashes.index(doc_sha256) if doc_sha256 in sha256hashes else -1
+    if ind != -1:
+        del simhashes[ind]
+
     report = {h: hash_similarity(doc_hs, hashtype(hash=int(h))) for h in simhashes}
     sorted_report = list(sorted(islice(report.items(), limit), key=lambda item: item[1], reverse=True))
     

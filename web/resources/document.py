@@ -3,6 +3,8 @@ from flask_restful import Resource, reqparse, abort, marshal_with, fields
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import werkzeug
 
+from datetime import datetime as dt
+
 from web.models import Document, DocumentType, User
 from web.comparison import TextProcessor, compare 
 from ..utils import DocumentUploader, DocumentCleaner
@@ -117,21 +119,20 @@ class OneDocument(Resource):
 
 class DocumentAnalyzer(Resource):
     @jwt_required()
-    def post(self, hash):
+    def get(self, hash):
         document = _search_document(hash)
         
         processor = TextProcessor(document.path)
         simhash = str(Hash.simhash(processor.normalize()))
         
         client = Client()
-        hashes = client.get_all_hashes()
+        simhashes, sha256hashes = client.get_all_hashes()
 
-        report = compare(simhash, hashes)
+        report = compare(simhash, hash, simhashes, sha256hashes)
         
-        total_similarity = 1.0
-        if total_similarity not in dict(report).values():
+        if hash not in sha256hashes:
             # Add hash to blockchain
-            client.add_hash(simhash)
+            client.add_hashes(simhash, hash)
             
             document.simhash = simhash
             try:
@@ -139,7 +140,7 @@ class DocumentAnalyzer(Resource):
             except Exception:
                 return abort(500, "Something went wrong")
 
-        serialized = [{"simhash": str(sh), "similarity": st} for sh, st in report]
+        serialized = [{"simhash": str(sh), "similarity": round(st * 100, 2) , "checked_at": str(dt.utcnow())} for sh, st in report]
         return serialized, 200
 
 
