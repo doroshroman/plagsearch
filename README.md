@@ -13,7 +13,7 @@
 3. Activate your virtual environment and install external dependencies from **requirements.txt**
 4. Deploy smart contracts
     ```
-    $ export PRIVATE_KEY=*copied private key*
+    $ python3 blockchain/deploy.py
     ```
 5. Run flask application
     ```
