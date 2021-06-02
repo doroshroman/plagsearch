@@ -126,3 +126,6 @@ dmypy.json
 
 # test_files folder
 test_files/
+documents/
+
+.flaskenv

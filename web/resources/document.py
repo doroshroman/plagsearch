@@ -3,18 +3,20 @@ from flask_restful import Resource, reqparse, abort, marshal_with, fields
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import werkzeug
 
+from datetime import datetime as dt
+
 from web.models import Document, DocumentType, User
-from web.comparison import TextProcessor
+from web.comparison import TextProcessor, compare 
 from ..utils import DocumentUploader, DocumentCleaner
 from ..utils import Hash
 
 import os, json
 from config import Config, basedir
 
-from web3 import Web3, HTTPProvider
-
-w3 = Web3(HTTPProvider('http://127.0.0.1:8545'))
-
+import sys
+# add blockchain folder to path
+sys.path.append(os.path.join(basedir, 'blockchain'))
+from client import Client
 
 parser = reqparse.RequestParser()
 _empty_msg = 'cannot be empty'
@@ -45,10 +47,10 @@ class NewDocument(Resource):
     @marshal_with(resource_fields)
     def post(self):
         data = parser.parse_args()
-        username = get_jwt_identity()
-        user = User.find_by_username(username)
+        identity = get_jwt_identity()
+        user = User.find_by_identity(identity)
 
-        uploader = DocumentUploader(data['attachment'], username)
+        uploader = DocumentUploader(data['attachment'], Hash.sha256(identity))
         try:
             path = uploader.upload()
 
@@ -70,10 +72,11 @@ class NewDocument(Resource):
 
 
 def _search_document(hash):
-        document = Document.find_by_hash(hash)
-        if not document:
-            return abort(400, message='This document does not exist')
-        return document
+    document = Document.find_by_hash(hash)
+    if not document:
+        return abort(400, message='This document does not exist')
+    return document
+
 
 class OneDocument(Resource):
     @jwt_required()
@@ -115,34 +118,39 @@ class OneDocument(Resource):
 
 
 class DocumentAnalyzer(Resource):
-    #@jwt_required()
-    def post(self, hash):
+    @jwt_required()
+    def get(self, hash):
         document = _search_document(hash)
         
-        # normalize text for simhash
         processor = TextProcessor(document.path)
-        simhash = Hash.simhash(processor.normalize())
+        simhash = str(Hash.simhash(processor.normalize()))
         
-        contract_path = os.path.join(basedir, os.path.join('blockchain', 'contract.json'))
-        with open(contract_path, 'r') as in_:
-            contract_data = json.load(in_)  
+        client = Client()
+        simhashes, sha256hashes = client.get_all_hashes()
 
-        key="0x0bb565fc386a4283e484b5cbb750feae0932a0aab577489dc8ca8d792bbee694" #change later
-        account = w3.eth.account.privateKeyToAccount(key)
-        account_address= account.address
-
-        abi = contract_data['abi']
-        contract_address = contract_data['contract_address']
-
-        # create contract instance
-        saver = w3.eth.contract(
-            address=contract_address, abi=abi
-        )
-        tx = saver.functions.addHash(simhash).buildTransaction({'nonce': w3.eth.getTransactionCount(account_address)})
-        signed_tx = account.sign_transaction(tx)
-        tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
-        w3.eth.wait_for_transaction_receipt(tx_hash)
+        report = compare(simhash, hash, simhashes, sha256hashes)
         
-        all_hashes = saver.functions.getAllHashes().call()
-        print(all_hashes)
-        return 200
+        if hash not in sha256hashes:
+            # Add hash to blockchain
+            client.add_hashes(simhash, hash)
+            
+            document.simhash = simhash
+            try:
+                document.save_to_db()
+            except Exception:
+                return abort(500, "Something went wrong")
+
+        serialized = [{"simhash": str(sh), "similarity": round(st * 100, 2) ,
+                         "checked_at": str(dt.utcnow())} for sh, st in report]
+        return serialized, 200
+
+
+class DocumentList(Resource):
+    @jwt_required()
+    @marshal_with(resource_fields)
+    def get(self):
+        identity = get_jwt_identity()
+        user = User.find_by_identity(identity)
+        documents = user.documents.all()
+
+        return documents, 200

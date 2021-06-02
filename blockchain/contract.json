@@ -4,7 +4,12 @@
             "inputs": [
                 {
                     "internalType": "string",
-                    "name": "hash",
+                    "name": "simhash",
+                    "type": "string"
+                },
+                {
+                    "internalType": "string",
+                    "name": "hashSha256",
                     "type": "string"
                 }
             ],
@@ -21,11 +26,16 @@
                     "internalType": "string[]",
                     "name": "",
                     "type": "string[]"
+                },
+                {
+                    "internalType": "string[]",
+                    "name": "",
+                    "type": "string[]"
                 }
             ],
             "stateMutability": "view",
             "type": "function"
         }
     ],
-    "contract_address": "0x26b85Ef357eEAbf22e2578DfF4E7EBD0a8d19Aac"
+    "contract_address": "0x33913681034fbf6dD3c88Add521753247a54Ef3F"
 }

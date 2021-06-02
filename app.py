@@ -15,19 +15,24 @@ from datetime import timezone
 
 from config import Config
 
+from flask_cors import CORS
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
 
 api = Api(app)
+cors = CORS(app)
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 jwt = JWTManager(app)
 
-from web.resources.user import UserRegister, UserLogin, SecretResource, UserLogout, TokenRefresh
-from web.resources.document import NewDocument, OneDocument, DocumentAnalyzer
+from web.resources.user import ( 
+    UserRegister, UserLogin, SecretResource, UserLogout, TokenRefresh, UserLoginWithGoogle
+)
+from web.resources.document import NewDocument, OneDocument, DocumentAnalyzer, DocumentList
 
 from web.models import RevokedToken
 
@@ -35,12 +40,14 @@ api.add_resource(UserRegister, '/register')
 api.add_resource(UserLogin, '/login')
 api.add_resource(UserLogout, '/logout')
 api.add_resource(TokenRefresh, '/refresh')
+api.add_resource(UserLoginWithGoogle, '/google_login')
 
 api.add_resource(NewDocument, '/document/add')
 api.add_resource(OneDocument, '/document/<string:hash>')
+api.add_resource(DocumentList, '/documents')
 
 api.add_resource(DocumentAnalyzer, '/document/analyze/<string:hash>')
-api.add_resource(SecretResource, '/secret') # for test purpose
+api.add_resource(SecretResource, '/secret')
 
 
 @jwt.token_in_blocklist_loader

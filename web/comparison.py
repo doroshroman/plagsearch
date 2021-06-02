@@ -13,6 +13,11 @@ import numpy as np
 import functools
 from config import basedir
 import os
+from .utils import Hash
+import hashes.hashtype as ht
+from hashes.hashtype import hashtype
+from itertools import islice
+
 
 try:
     nltk.data.find('tokenizers/punkt')
@@ -65,31 +70,23 @@ class TextProcessor:
         return self.tokenize(self.text)
 
 
-# normalize_partial = functools.partial(normalize, stop_words=uk_stop_words)
-# vectorizer = TfidfVectorizer(tokenizer=normalize_partial)
+def compare(doc_simhash, doc_sha256, simhashes, sha256hashes, limit=10):
+    doc_hs = hashtype(hash=int(doc_simhash))
+    
+    # remove the same item
+    ind = sha256hashes.index(doc_sha256) if doc_sha256 in sha256hashes else -1
+    if ind != -1:
+        del simhashes[ind]
 
-# def cosine_sim(input_doc: str, corpus: List[str]) -> float:
-#     corpus.append(input_doc)
-
-#     tfidf = vectorizer.fit_transform(corpus)
-#     similarity_matrix = (tfidf * tfidf.T).A
-#     np.fill_diagonal(similarity_matrix, np.nan)
-
-#     return np.nanmax(similarity_matrix[-1])    
+    report = {h: hash_similarity(doc_hs, hashtype(hash=int(h))) for h in simhashes}
+    sorted_report = list(sorted(islice(report.items(), limit), key=lambda item: item[1], reverse=True))
+    
+    return sorted_report
 
 
-#if __name__ == "__main__":
-    # folder = './test_files'
-    # input_path_1 = f'{folder}/MpiLab1.docx'
-    # input_path_2 = f'{folder}/MpiLab1_plag.docx'
+def hash_similarity(hash, other_hash, hashbits=None):
+    if not hashbits:
+        hashbits = ht.default_hashbits
+    
+    return float(hashbits - hash.hamming_distance(other_hash)) / hashbits
 
-    # processor = TextProcessor(input_path_1, './stop_words_ua.txt') 
-    # from web.utils import Hash
-    # hash = Hash(processor.normalize())
-    # print(hash.sha256())
-    # from hashes.simhash import simhash
-    # hash1 = simhash(normalize(input_doc_1, uk_stop_words))
-    # hash2 = simhash(normalize(input_doc_2, uk_stop_words))
-
-    # print([hash1.hex(), hash2.hex()])
-    # print(hash1.similarity(hash2))

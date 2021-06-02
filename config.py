@@ -18,3 +18,5 @@ class Config(object):
 
     UPLOAD_FOLDER = os.path.join(basedir, 'documents')
     ALLOWED_EXTENSIONS = {'txt', 'pdf', 'doc', 'docx', 'html', 'htm', 'epub'}
+
+    GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
