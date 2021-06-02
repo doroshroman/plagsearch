@@ -47,7 +47,7 @@ api.add_resource(OneDocument, '/document/<string:hash>')
 api.add_resource(DocumentList, '/documents')
 
 api.add_resource(DocumentAnalyzer, '/document/analyze/<string:hash>')
-api.add_resource(SecretResource, '/secret') # for test purpose
+api.add_resource(SecretResource, '/secret')
 
 
 @jwt.token_in_blocklist_loader

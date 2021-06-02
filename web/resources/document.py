@@ -140,7 +140,8 @@ class DocumentAnalyzer(Resource):
             except Exception:
                 return abort(500, "Something went wrong")
 
-        serialized = [{"simhash": str(sh), "similarity": round(st * 100, 2) , "checked_at": str(dt.utcnow())} for sh, st in report]
+        serialized = [{"simhash": str(sh), "similarity": round(st * 100, 2) ,
+                         "checked_at": str(dt.utcnow())} for sh, st in report]
         return serialized, 200
 
 
